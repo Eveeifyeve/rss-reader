@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = app::new();
+    let mut app = App::new();
     let res = run_app(&mut terminal, &mut app);
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut app) -> io::Result<bool> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     loop {
         terminal.draw(|f| ui::draw(f, app))?;
         if let Event::Key(key) = event::read()? {
@@ -49,13 +49,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut app) -> io::Result<
                 },
                 CurrentScreen::Viewing => todo!(),
                 CurrentScreen::Adding => todo!(),
-                CurrentScreen::Editing if key.kind == KeyEventKind::Press => match key.code {
+                CurrentScreen::Editing => match key.code {
                     KeyCode::Enter => {
                         if let Some(editing) = &app.currently_editing {
                             match editing {
                                 CurrentlyEditing::FeedUrl => {
                                     app.currently_editing = Some(CurrentlyEditing::FeedUrl);
                                 }
+                                CurrentlyEditing::Piority => todo!(),
                             }
                         }
                     }
@@ -65,6 +66,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut app) -> io::Result<
                                 CurrentlyEditing::FeedUrl => {
                                     app.feed_url.pop();
                                 }
+                                CurrentlyEditing::Piority => todo!(),
                             }
                         }
                     }
@@ -79,8 +81,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut app) -> io::Result<
                         if let Some(editing) = &app.currently_editing {
                             match editing {
                                 CurrentlyEditing::FeedUrl => {
-                                    app.key_input.push(value);
+                                    app.feed_url.push(value);
                                 }
+                                CurrentlyEditing::Piority => todo!(),
                             }
                         }
                     }

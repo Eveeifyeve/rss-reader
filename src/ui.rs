@@ -1,14 +1,11 @@
+use crate::components::*;
 use ratatui::{
-    crossterm::style::Color,
     layout::{Constraint, Direction, Layout},
-    prelude::*,
-    style::Color,
+    prelude::{Color, Style}, // Keep the original Color from prelude
     text::*,
     widgets::*,
+    Frame,
 };
-use symbols::border;
-
-use crate::components::*;
 
 use crate::app::{App, CurrentScreen, CurrentlyEditing};
 
@@ -30,7 +27,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
         .style(Style::default());
 
     let title = Paragraph::new(Text::styled(
-        "Create New Json",
+        "RSS Reader Feeds",
         Style::default().fg(Color::Green),
     ))
     .block(title_block);
@@ -55,9 +52,19 @@ pub fn draw(frame: &mut Frame, app: &App) {
         match app.current_screen {
             CurrentScreen::Main => Span::styled("Normal Mode", Style::default().fg(Color::Green)),
             CurrentScreen::Editing => {
-                Span::styled("Editing Mode", Style::default().fg(Color::Yellow))
+                span("Editing Mode", Some(Style::default().fg(Color::Yellow)))
             }
-            CurrentScreen::Exiting => Span::styled("Exiting", Style::default().fg(Color::LightRed)),
+            CurrentScreen::Adding => {
+                span("Adding Mode", Some(Style::default().fg(Color::LightRed)))
+            }
+            CurrentScreen::Searching => span(
+                "Searching Mode",
+                Some(Style::default().fg(Color::LightGreen)),
+            ),
+            CurrentScreen::Viewing => {
+                span("Viewing Mode", Some(Style::default().fg(Color::LightBlue)))
+            }
+            CurrentScreen::Exiting => span("Exiting", Some(Style::default().fg(Color::LightRed))),
         }
         .to_owned(),
         // A white divider bar to separate the two sections
@@ -112,10 +119,10 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     // Editing Mode
     if let Some(editing) = &app.currently_editing {
-        let popup_block = popup_block(
+        let popup_block = block(
             "Enter a new key-value pair",
-            Style::default().bg(Color::DarkGrey.into()),
-            Borders::NONE,
+            Some(Style::default().bg(Color::DarkGray)),
+            None,
         );
 
         let area = centered_rect(60, 25, frame.area());
@@ -127,35 +134,35 @@ pub fn draw(frame: &mut Frame, app: &App) {
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(area);
 
-        let mut key_block = Block::default().title("Key").borders(Borders::ALL);
-        let mut value_block = Block::default().title("Value").borders(Borders::ALL);
+        let mut key_block = block("Key", Some(Style::default().fg(Color::Yellow)), None);
+        let mut value_block = block("Value", Some(Style::default().fg(Color::Yellow)), None);
 
-        let active_style = style(Color::LightYellow.into(), Color::Black.into());
+        let active_style = style(Some(Color::Yellow), Some(Color::Black));
 
         match editing {
             CurrentlyEditing::FeedUrl => key_block = key_block.style(active_style),
             CurrentlyEditing::Piority => value_block = value_block.style(active_style),
         };
 
-        let key_text = Paragraph::new(app.feed_url.clone()).block(key_block);
+        let key_text = Paragraph::new(" ")
+            .block(key_block)
+            .wrap(Wrap { trim: false });
         frame.render_widget(key_text, popup_chunks[0]);
 
-        let value_text = Paragraph::new(app.piority.to_text().clone()).block(value_block);
+        let value_text = Paragraph::new(app.piority.to_text())
+            .block(value_block)
+            .wrap(Wrap { trim: false });
         frame.render_widget(value_text, popup_chunks[1]);
     }
 
     // Exiting Mode
     if let CurrentScreen::Exiting = app.current_screen {
         frame.render_widget(Clear, frame.area()); //this clears the entire screen and anything already drawn
-        let popup_block = popup_block(
-            "Y/N",
-            Style::default().bg(Color::DarkGrey.into()),
-            Borders::NONE,
-        );
+        let popup_block = block("Y/N", Some(Style::default().bg(Color::DarkGray)), None);
 
-        let exit_text = Text::styled(
+        let exit_text = text(
             "Would you like to output the buffer as json? (y/n)",
-            Style::default().fg(Color::Red),
+            Some(Style::default().fg(Color::Red)),
         );
         // the `trim: false` will stop the text from being cut off when over the edge of the block
         let exit_paragraph = Paragraph::new(exit_text)
@@ -165,23 +172,4 @@ pub fn draw(frame: &mut Frame, app: &App) {
         let area = centered_rect(60, 25, frame.area());
         frame.render_widget(exit_paragraph, area);
     }
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(r);
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1] // Return the middle chunk
 }

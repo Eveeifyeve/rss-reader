@@ -28,6 +28,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+pub struct Feed {
+    pub name: String,
+    pub url: String,
+    pub priority: u8,
+}
+
+type Feeds = Vec<Feed>;
+
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     loop {
         terminal.draw(|f| ui::draw(f, app))?;

@@ -2,10 +2,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    agenix-shell.url = "github:aciceri/agenix-shell";
   };
 
-  outputs = inputs@{ self, nixpkgs, flake-parts, agenix-shell, ... }:
+  outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = nixpkgs.lib.systems.flakeExposed;
       perSystem = {
@@ -18,16 +17,18 @@
         inherit (pkgs.darwin.apple_sdk.frameworks) CoreFoundation;
       in
       {
-        devShells.default = pkgs.mkShell
+        devShells.default = pkgs.mkShell.override {
+          stdenv = pkgs.llvmPackages.stdenv;
+        }
         {
           packages = with pkgs; [
             rustc
+            rustfmt
             cargo
             clippy
-            python3
+            libiconv
             darwin.libobjc
           ];
-
         };
       };
     };

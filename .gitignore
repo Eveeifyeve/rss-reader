@@ -3,3 +3,7 @@
 # Nix
 .direnv
 .devenv
+
+# Added by cargo
+
+/target
